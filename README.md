@@ -17,4 +17,4 @@ Check terminal for app activity and progress.
 
 *Make sure to update settings.json file with configuration variables*
 
-![bowrlogo2](media/BowrSS2.png)
+![bowrlogo2](media/BowrSSB.png)
