@@ -1,5 +1,7 @@
-# Bowr Sentiment Sentinel
-Stream transcription powered by the OpenAI Whisper engine, with a Flask front-end to index and "germinate" leads.
+# Bowr Sentiment Sentinel  
+Stream transcription powered by the OpenAI Whisper engine, with a Flask front-end to index and "germinate" leads.  
+
+**Built with GPT-4o**
 
 ![bowrlogo](media/BowrSS.png)
 
