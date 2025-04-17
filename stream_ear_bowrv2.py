@@ -103,6 +103,8 @@ def determine_status(confidence):
 def log_transcription_with_keywords(text, stream_url):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     keywords_hit = [kw for kw in KEYWORDS if kw.lower() in text.lower()]
+    print("\n📋 Transcript Snippet:\n", text)
+
     matched_str = ", ".join(keywords_hit) if keywords_hit else ""
     day_stamp = datetime.now().strftime("%Y_%m_%d")
     all_path = os.path.join(REPORTS_DIR, f"all_transcripts_{day_stamp}.csv")
@@ -137,13 +139,22 @@ def log_transcription_with_keywords(text, stream_url):
     with open(LAST_CHIRP_PATH, "w", encoding="utf-8") as f:
         json.dump(seed_entry, f, indent=2)
 
+    # Append only if it's not already in the log
     seed_log = []
     if os.path.exists(SEED_INDEX_PATH):
         with open(SEED_INDEX_PATH, "r", encoding="utf-8") as f:
             seed_log = json.load(f)
-    seed_log.append(seed_entry)
-    with open(SEED_INDEX_PATH, "w", encoding="utf-8") as f:
-        json.dump(seed_log, f, indent=2)
+
+    # Avoid inserting a duplicate (by timestamp + text)
+    already_logged = any(
+        s.get("timestamp") == seed_entry["timestamp"] and s.get("text") == seed_entry["text"]
+        for s in seed_log
+    )
+    if not already_logged:
+        seed_log.append(seed_entry)
+        with open(SEED_INDEX_PATH, "w", encoding="utf-8") as f:
+            json.dump(seed_log, f, indent=2)
+
 
     print("\n📦 Stream Ear Summary")
     print("─────────────────────────────")
@@ -151,41 +162,71 @@ def log_transcription_with_keywords(text, stream_url):
     print(f"📄 Transcript Length: {len(text)} characters")
     print(f"🎯 Confidence: {confidence:.2f} → {status.upper()}")
     print(f"📁 Reports Saved To: {REPORTS_DIR}")
+    return keywords_hit
+
 
 # ─── LOOP ──────────────────────────────────────────────────────────────────────
 def bowr_loop():
     token_tally = 0
+
+    import requests
+    import socket
+
+    def is_connected():
+        try:
+            socket.create_connection(("8.8.8.8", 53), timeout=3)
+            return True
+        except OSError:
+            return False
+
+    
+    
     for stream_url in STREAM_URLS:
         while True:
             try:
+                if not is_connected():
+                    print("📡 Lost internet connection. Pausing for 1 hour...")
+                    time.sleep(3600)
+                    continue
+
                 print(f"\n🔄 Listening for {RECORD_SECONDS} seconds...")
                 show_live_timer(RECORD_SECONDS)
                 success = record_stream(stream_url, OUTPUT_WAV, duration=RECORD_SECONDS)
                 if not success:
-                    break
+                    raise ConnectionError("⚠️ Stream capture failed (likely connectivity).")
+
                 show_progress_bar("Transcribing", duration=3)
                 text = transcribe_audio(OUTPUT_WAV)
-                token_count = estimate_token_usage(text)
-                token_tally += token_count
-                if token_tally > TOKEN_CAP:
-                    print(f"🛑 Token cap reached ({token_tally}). Ending session.")
-                    return
-                print(f"🔢 Estimated token usage: ~{token_count} tokens (total: {token_tally})")
-                log_transcription_with_keywords(text, stream_url)
-                
-                # Update dashboard status file
+                keywords_hit = log_transcription_with_keywords(text, stream_url)
+                print("\n📋 Transcript Snippet:\n", text)
+
                 with open(os.path.join(BASE_DIR, "static", "status.json"), "w", encoding="utf-8") as f:
                     json.dump({
+                        "is_listening": True,
                         "last_run": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                         "last_stream": stream_url,
                         "last_result": "Chirp processed",
                         "last_keywords": keywords_hit
-                    }, f, indent=2)                
-                print("\n📋 Transcript Snippet:\n", text)
+                    }, f, indent=2)
+
+            except (requests.exceptions.RequestException, ConnectionError) as e:
+                print(f"🌐 Network issue: {e}")
+                print("⏸️ Pausing for 1 hour before retrying...")
+                time.sleep(3600)
+
             except Exception as e:
-                print("❌ Error during cycle:", e)
+                print("❌ Unhandled error during cycle:", e)
+
             print(f"\n⏳ Waiting {INTERVAL_MINUTES} minutes until next sample...\n")
             time.sleep(INTERVAL_MINUTES * 60)
+
+            # Set listening to false AFTER cooldown
+            with open(os.path.join(BASE_DIR, "static", "status.json"), "w", encoding="utf-8") as f:
+                json.dump({
+                    "is_listening": False
+                }, f, indent=2)
+
+
 
 if __name__ == "__main__":
     bowr_loop()
