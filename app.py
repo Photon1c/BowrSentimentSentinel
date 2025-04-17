@@ -3,6 +3,8 @@ import json
 import os
 from datetime import datetime
 import subprocess
+from collections import Counter
+
 
 app = Flask(__name__)
 
@@ -73,11 +75,40 @@ def trigger_listen():
 
 @app.route("/seeds")
 def view_seeds():
+    status_filter = request.args.get("status")  # from dropdown
     seeds = []
+
     if os.path.exists(SEED_INDEX_PATH):
         with open(SEED_INDEX_PATH, "r", encoding="utf-8") as f:
-            seeds = json.load(f)
-    return render_template("seeds.html", seeds=seeds)
+            raw_seeds = json.load(f)
+
+        # 🔽 Normalize all statuses first
+        for s in raw_seeds:
+            status = s.get("status", "unknown").lower()
+            s["status"] = status  # update the record itself
+
+        # 🧮 Count statuses
+        status_counts = Counter(s["status"] for s in raw_seeds)
+        status_counts["all"] = len(raw_seeds)
+        print("🧪 Statuses found:", set(status_counts.keys()))
+
+        # 🔍 Filter seeds based on selected status
+        unique = {}
+        for s in raw_seeds:
+            ts = s.get("timestamp")
+            text_snippet = s.get("text", "")[:50]
+            if ts:
+                if not status_filter or s["status"] == status_filter:
+                    key = (ts, text_snippet)
+                    unique[key] = s
+
+
+        seeds = list(unique.values())
+
+    return render_template("seeds.html", seeds=seeds, current_status=status_filter, status_counts=status_counts)
+
+
+
 
 @app.route("/status")
 def get_status():
