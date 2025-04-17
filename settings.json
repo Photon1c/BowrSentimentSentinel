@@ -1,0 +1,47 @@
+{
+  "OPENAI_API_KEY": "your-api-key",
+  "alpaca_key_id": "for-future-use",
+  "alpaca_secret_key": "this-version-does-not-use-alpaca",
+  "alpha_vantage_key": "just-kept-this-as-placeholder",
+  "BASE_DIR": "Your:/Directory/Project",
+  "LOG_DIR": "Your:/Directory/Project/logs",
+  "OUTPUT_DIR": "Your:/Directory/Project/output",
+  "TEMP_DIR": "Your:/Directory/Project/tmp",
+  "REPORT_SUBDIR": "reports",
+  "debug_mode": true,
+  "enable_stream_monitoring": false,
+  "use_gpu": true,
+  "stream_check_interval_sec": 30,
+  "dashboard_refresh_rate": 5,
+  "volatility_threshold": 0.3,
+  "breakout_confidence": 0.85,
+  "modules": {
+    "stream_ear_bowr": {
+      "STREAM_URLS": [
+        "https://www.youtube.com/watch?v={live_stream_id_here}"
+      ],
+      "RECORD_SECONDS": 30,
+      "INTERVAL_MINUTES": 15,
+      "TOKEN_CAP": 5000,
+      "KEYWORDS": [
+        "bullish",
+        "bearish",
+        "calls",
+        "puts",
+        "earnings",
+        "momentum",
+        "volume",
+        "breakout",
+        "resistance",
+        "support",
+        "googl",
+        "aapl",
+        "tsla",
+        "msft",
+        "nvda",
+        "meta",
+        "amzn"
+      ]
+    }
+  }
+}
