@@ -69,6 +69,34 @@
 </head>
 <body>
   <h1>🌱 Seed Index Tracker</h1>
+
+  <!-- Dropdown Filter -->
+	<form method="get" action="/seeds" style="margin-bottom: 1em;">
+	  <label for="status">Filter by Status:</label>
+	  <select name="status" onchange="this.form.submit()">
+		<option value="" {% if not current_status %}selected{% endif %}>
+		  🌐 All ({{ status_counts["all"] }})
+		</option>
+		<option value="planted" {% if current_status == 'planted' %}selected{% endif %}>
+		  🌱 Planted ({{ status_counts["planted"] or 0 }})
+		</option>
+		<option value="sprouted" {% if current_status == 'sprouted' %}selected{% endif %}>
+		  🌿 Sprouted ({{ status_counts["sprouted"] or 0 }})
+		</option>
+		<option value="budding" {% if current_status == 'budding' %}selected{% endif %}>
+		  🌸 Budding ({{ status_counts["budding"] or 0 }})
+		</option>
+		<option value="fruiting" {% if current_status == 'fruiting' %}selected{% endif %}>
+		  🍎 Fruiting ({{ status_counts["fruiting"] or 0 }})
+		</option>
+		<option value="discarded" {% if current_status == 'discarded' %}selected{% endif %}>
+		  ❌ Discarded ({{ status_counts["discarded"] or 0 }})
+		</option>
+	  </select>
+	</form>
+
+
+  <!-- Seed Table -->
   <table id="seedTable">
     <thead>
       <tr>
@@ -85,8 +113,23 @@
       <tr class="{{ seed.status }}">
         <td>{{ seed.timestamp }}</td>
         <td>{{ seed.id }}</td>
-        <td>{{ seed.status }}</td>
-        <td>{{ seed.keywords | join(', ') }}</td>
+        <td>
+          {% if seed.status == "planted" %}🌱 Planted
+          {% elif seed.status == "sprouted" %}🌿 Sprouted
+          {% elif seed.status == "budding" %}🌸 Budding
+          {% elif seed.status == "fruiting" %}🍎 Fruiting
+          {% elif seed.status == "discarded" %}❌ Discarded
+          {% else %}🕵️ Unknown
+          {% endif %}
+        </td>
+		<td>
+		  {% if seed.keywords %}
+			{{ seed.keywords | join(', ') }}
+		  {% else %}
+			⚠️ No keywords found
+		  {% endif %}
+		</td>
+
         <td>{{ seed.confidence }}</td>
         <td>{{ seed.text[:100] }}...</td>
       </tr>
@@ -94,4 +137,5 @@
     </tbody>
   </table>
 </body>
+
 </html>
