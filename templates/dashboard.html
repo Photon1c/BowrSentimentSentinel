@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Alpha Cockpit – Seed Radar</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #0d0d0d;
+      color: #f1f1f1;
+    }
+    header {
+      padding: 1rem;
+      background: #1a1a1a;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #333;
+    }
+    h1 {
+      font-size: 1.5rem;
+      color: #90ee90;
+    }
+    select, button, input {
+      padding: 0.4rem;
+      margin-left: 0.5rem;
+      background: #222;
+      color: #eee;
+      border: 1px solid #444;
+      border-radius: 4px;
+    }
+    #statusPanel {
+      padding: 0.8rem 1rem;
+      background: #121212;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      border-bottom: 1px solid #333;
+      font-size: 0.85rem;
+    }
+    .statusItem {
+      flex: 1 1 200px;
+    }
+    #seedRadar {
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .seedCard {
+      background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
+      border-left: 5px solid #90ee90;
+      padding: 1rem;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(144, 238, 144, 0.5);
+      animation: fadeInOut 20s forwards;
+    }
+    @keyframes fadeInOut {
+      0% { opacity: 0; transform: translateY(20px); }
+      10% { opacity: 1; transform: translateY(0); }
+      90% { opacity: 1; }
+      100% { opacity: 0; transform: translateY(-20px); }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Alpha Cockpit: Seed Radar</h1>
+    <form action="/trigger" method="POST">
+      <label for="stream_url">Stream:</label>
+      <select name="stream_url">
+        {% for url in stream_urls %}
+          <option value="{{ url }}">{{ url }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit">Start Listening</button>
+    </form>
+  </header>
+
+  <div id="statusPanel">
+    <div class="statusItem"><strong>Last Run:</strong> {{ status.last_run or 'N/A' }}</div>
+    <div class="statusItem"><strong>Stream:</strong> {{ status.last_stream or 'N/A' }}</div>
+    <div class="statusItem"><strong>Status:</strong> {{ status.last_result or 'Idle' }}</div>
+    <div class="statusItem">
+      <strong>Keywords:</strong>
+      {{ status.last_keywords | join(', ') if status.last_keywords else 'None' }}
+    </div>
+    <div class="statusItem">
+      <form action="/add_keyword" method="POST" style="display:flex;align-items:center;gap:0.5rem;">
+        <input type="text" name="new_keyword" placeholder="Add keyword..." required>
+        <button type="submit">Add to Bower Chatter Scanner</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="seedRadar"></div>
+
+  <script>
+    const radar = document.getElementById('seedRadar');
+    function fetchChirp() {
+      fetch('/static/last_chirp.json')
+        .then(res => res.json())
+        .then(data => {
+          if (!data || !data.text) return;
+          const keywords = data.keywords && data.keywords.length > 0 ? data.keywords.join(', ') : 'None';
+          const card = document.createElement('div');
+          card.classList.add('seedCard');
+          card.innerHTML = `
+            <strong>📅 ${data.timestamp}</strong><br>
+            <em>🔗 ${data.stream_url}</em><br>
+            <strong>🎯 Keywords:</strong> ${keywords}<br>
+            <p style="margin-top: 0.5rem;">${data.text}</p>
+          `;
+          radar.appendChild(card);
+        })
+        .catch(err => console.error('Error fetching chirp:', err));
+    }
+    setInterval(fetchChirp, 30000);
+  </script>
+</body>
+</html>

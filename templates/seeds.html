@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Seed Index – Bowr Intelligence</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0e0e0e;
+      color: #e6ffe6;
+      padding: 2rem;
+    }
+    h1 {
+      text-align: center;
+      color: #90ee90;
+      margin-bottom: 2rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    th, td {
+      padding: 0.6rem;
+      text-align: left;
+      border-bottom: 1px solid #333;
+    }
+    th {
+      background-color: #1c1c1c;
+      color: #aaffaa;
+      cursor: pointer;
+    }
+    tr:hover {
+      background-color: #1a1a1a;
+    }
+    .planted {
+      background-color: #2a2f22;
+      color: #c0ffc0;
+    }
+    .sprouting {
+      background-color: #333f2f;
+      color: #d2ffb2;
+    }
+    .blooming {
+      background-color: #284c28;
+      color: #e0ffe0;
+    }
+    .dormant {
+      background-color: #2f2f2f;
+      color: #aaaaaa;
+    }
+    .discarded {
+      background-color: #3f1e1e;
+      color: #ffaaaa;
+    }
+  </style>
+  <script>
+    function sortTable(colIndex) {
+      const table = document.getElementById("seedTable");
+      const rows = Array.from(table.rows).slice(1);
+      const sorted = rows.sort((a, b) => {
+        const aText = a.cells[colIndex].innerText.toLowerCase();
+        const bText = b.cells[colIndex].innerText.toLowerCase();
+        return aText.localeCompare(bText);
+      });
+      sorted.forEach(row => table.appendChild(row));
+    }
+  </script>
+</head>
+<body>
+  <h1>🌱 Seed Index Tracker</h1>
+  <table id="seedTable">
+    <thead>
+      <tr>
+        <th onclick="sortTable(0)">Timestamp</th>
+        <th onclick="sortTable(1)">ID</th>
+        <th onclick="sortTable(2)">Status</th>
+        <th>Keywords</th>
+        <th>Confidence</th>
+        <th>Text Snippet</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for seed in seeds|reverse %}
+      <tr class="{{ seed.status }}">
+        <td>{{ seed.timestamp }}</td>
+        <td>{{ seed.id }}</td>
+        <td>{{ seed.status }}</td>
+        <td>{{ seed.keywords | join(', ') }}</td>
+        <td>{{ seed.confidence }}</td>
+        <td>{{ seed.text[:100] }}...</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</body>
+</html>
